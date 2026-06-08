@@ -7,6 +7,9 @@
 // `renderFractionVisual` is kept for callers that want a single classic visual;
 // `renderRepresentationGallery` is the rich multi-view used on the play screen.
 import { el, svgEl } from '../dom.js'
+import { fractionGlyph } from './glyph.js'
+import { fractionGrid, gridShape } from './grid.js'
+import { lcm } from '../../fractions/fraction.js'
 import { t } from '../../i18n/index.js'
 
 // ---- shared bits -----------------------------------------------------------
@@ -150,7 +153,50 @@ function renderGlass(n, d, w = 78, h = 110) {
   return svg
 }
 
+// ---- Add / subtract: an equation strip on a unified grid -------------------
+
+// A term in the equation: a grid with its fraction label below.
+function eqTerm(grid, label, i) {
+  return el('div', { class: 'eq-term', style: `--eq-delay:${0.14 * i + 0.05}s` }, grid, label)
+}
+
+// The label under each operand: the original fraction, plus its equivalent on
+// the common denominator when scaling changed it — which is exactly *why* the
+// grid is unified (you can only add/subtract once the pieces are the same size).
+function eqLabel(n, d, D) {
+  const lab = el('div', { class: 'eq-lab' }, fractionGlyph(n, d, { size: 'sm' }))
+  if (d !== D) lab.append(el('span', { class: 'eq-eqsign' }, '='), fractionGlyph((n * D) / d, D, { size: 'sm' }))
+  return lab
+}
+
+// `A [+|−] B = ?` where every fraction is drawn on ONE common-denominator grid,
+// so all cells are the same size and the child can directly count and combine
+// them. The result stays a "?" (an empty grid) so the visual never hands over
+// the answer — it scaffolds the typed tiers without solving them.
+function renderAddSubVisual(visual) {
+  const { a, b, op } = visual
+  const D = lcm(a.d, b.d)
+  const { cols } = gridShape(D)
+  return el(
+    'div',
+    { class: `viz eq-strip eq-${op}` },
+    eqTerm(fractionGrid((a.n * D) / a.d, D, { cols }), eqLabel(a.n, a.d, D), 0),
+    el('div', { class: 'eq-op' }, op === 'add' ? '+' : '−'),
+    eqTerm(fractionGrid((b.n * D) / b.d, D, { cols, delay: 0.12 }), eqLabel(b.n, b.d, D), 1),
+    el('div', { class: 'eq-op' }, '='),
+    eqTerm(fractionGrid(0, D, { cols, empty: true }), el('span', { class: 'eq-q' }, '?'), 2),
+  )
+}
+
 // ---- public ---------------------------------------------------------------
+
+// Pick the right visual for a problem: the add/subtract equation strip, or the
+// five-way representation gallery for single-fraction visuals.
+export function renderProblemVisual(visual) {
+  if (!visual) return null
+  if (visual.type === 'addsub') return renderAddSubVisual(visual)
+  return renderRepresentationGallery(visual)
+}
 
 // Single classic visual (kept for compatibility): pie or bar.
 export function renderFractionVisual(visual, size = 180) {

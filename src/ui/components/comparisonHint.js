@@ -11,6 +11,8 @@
 //    "n/d = m/D" label makes the equivalent-fraction step explicit.
 import { el, clear } from '../dom.js'
 import { fractionGlyph } from './glyph.js'
+import { fractionGrid, gridShape } from './grid.js'
+import { lcm } from '../../fractions/fraction.js'
 import { t } from '../../i18n/index.js'
 
 export function renderComparisonHint(fractions) {
@@ -89,26 +91,6 @@ function buildBarsView(fractions) {
 
 // ---- Grid view: the multiplication / common-denominator area model --------
 
-function gcd(a, b) {
-  while (b) [a, b] = [b, a % b]
-  return a
-}
-function lcm(a, b) {
-  return (a / gcd(a, b)) * b
-}
-
-// Lay D cells out as near-square rows×cols (cols >= rows reads as a wide grid).
-function gridShape(D) {
-  let rows = 1
-  for (let r = Math.floor(Math.sqrt(D)); r >= 1; r--) {
-    if (D % r === 0) {
-      rows = r
-      break
-    }
-  }
-  return { rows, cols: D / rows }
-}
-
 function buildGridView(fractions) {
   const D = fractions.reduce((acc, f) => lcm(acc, f.d), 1)
   const { cols } = gridShape(D)
@@ -116,15 +98,7 @@ function buildGridView(fractions) {
 
   const tiles = fractions.map((f, idx) => {
     const filled = (f.n * D) / f.d
-    const grid = el('div', { class: 'cmp-grid', style: `--cols:${cols}` })
-    for (let i = 0; i < D; i++) {
-      grid.append(
-        el('span', {
-          class: `cmp-gcell ${i < filled ? 'on' : ''}`,
-          style: `animation-delay:${0.012 * i + 0.12 * idx}s`,
-        }),
-      )
-    }
+    const grid = fractionGrid(filled, D, { cols, delay: 0.12 * idx })
     const tile = el(
       'button',
       { class: 'cmp-tile', type: 'button', style: `--row-delay:${0.12 * idx}s` },

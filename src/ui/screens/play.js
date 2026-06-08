@@ -5,7 +5,7 @@
 import { el, clear } from '../dom.js'
 import { tierStars } from '../components/stars.js'
 import { createMascot } from '../components/mascot.js'
-import { renderRepresentationGallery } from '../components/fractionVisual.js'
+import { renderProblemVisual } from '../components/fractionVisual.js'
 import { renderComparisonHint } from '../components/comparisonHint.js'
 import { renderChoices } from '../components/choices.js'
 import { renderNumpad } from '../components/numpad.js'
@@ -60,7 +60,7 @@ export function PlayScreen({ nav, progress }, skillId) {
     root.append(progressBar())
 
     const card = el('div', { class: 'card' }, el('p', { class: 'prompt' }, problem.prompt))
-    const gallery = renderRepresentationGallery(problem.visual)
+    const gallery = renderProblemVisual(problem.visual)
     if (gallery) card.append(el('div', { class: 'visual' }, gallery))
 
     // Comparison problems carry no visual, so offer a "show me" hint that draws

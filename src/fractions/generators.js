@@ -249,13 +249,17 @@ function genAddSub(tier, rng) {
   const symbol = op === 'add' ? '+' : '−'
   const prompt = `${toString(fa)} ${symbol} ${toString(fb)} = ?`
 
+  // An equation visual: the two operands drawn as bars with the operator. The
+  // result is deliberately left out (a "?") so it never reveals a typed answer.
+  const visual = { type: 'addsub', op, a: { n: fa.n, d: fa.d }, b: { n: fb.n, d: fb.d } }
+
   if (tier <= 2) {
     // Multiple choice with common-mistake distractors.
     const wrongAddDen =
       op === 'add' ? frac(fa.n + fb.n, fa.d + fb.d) : frac(Math.abs(fa.n - fb.n), Math.abs(fa.d - fb.d) || 1)
     const distractors = [simplify(wrongAddDen), frac(answer.n + 1, answer.d), frac(Math.max(1, answer.n - 1), answer.d)]
     const choices = fractionChoices(rng, answer, distractors)
-    return { skill, tier, prompt, visual: null, inputMode: 'choice', choices, answer, check: (v) => equals(v, answer) }
+    return { skill, tier, prompt, visual, inputMode: 'choice', choices, answer, check: (v) => equals(v, answer) }
   }
 
   // Typed answer for harder tiers.
@@ -263,7 +267,7 @@ function genAddSub(tier, rng) {
     skill,
     tier,
     prompt: prompt + t('prompt.simplestSuffix'),
-    visual: null,
+    visual,
     inputMode: 'fraction',
     choices: null,
     answer,
