@@ -98,20 +98,31 @@ export function HomeScreen({ nav, progress }) {
     t('home.reset'),
   )
 
+  // Two groups so landscape can lay them out as independent side-by-side
+  // columns. Stacked (mobile) they fall in natural order: hero, stats, then the
+  // games, then reset.
   return el(
     'section',
     { class: 'screen home' },
     languageBar(nav),
     el(
       'div',
-      { class: 'home-hero' },
-      createMascot({ size: 104 }),
-      el('h1', { class: 'title' }, `${t('app.title')} `, el('span', { class: 'wave' }, '🍕')),
-      el('p', { class: 'subtitle' }, t('app.subtitle')),
+      { class: 'home-left' },
+      el(
+        'div',
+        { class: 'home-hero' },
+        createMascot({ size: 104 }),
+        el('h1', { class: 'title' }, `${t('app.title')} `, el('span', { class: 'wave' }, '🍕')),
+        el('p', { class: 'subtitle' }, t('app.subtitle')),
+      ),
+      overallStrip(progress),
     ),
-    overallStrip(progress),
-    smartStart(progress, nav),
-    el('div', { class: 'skill-grid' }, ...SKILLS.map((s, i) => skillCard(s, progress, nav, i))),
+    el(
+      'div',
+      { class: 'home-right' },
+      smartStart(progress, nav),
+      el('div', { class: 'skill-grid' }, ...SKILLS.map((s, i) => skillCard(s, progress, nav, i))),
+    ),
     reset,
   )
 }

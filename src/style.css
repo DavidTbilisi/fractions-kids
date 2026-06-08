@@ -108,7 +108,16 @@ body {
   justify-content: center;
   overflow: hidden;
 }
-.screen.home, .screen.results { max-width: 560px; margin-inline: auto; }
+.screen.home, .screen.results {
+  max-width: 560px;
+  margin-inline: auto;
+  /* When content is taller than the viewport, `safe center` aligns to the
+     start instead of clipping equally top & bottom, and overflow-y lets the
+     user reach the off-screen bits (e.g. the language bar / last skill card). */
+  justify-content: safe center;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 
 .title {
   font-family: 'Lilita One', system-ui, sans-serif;
@@ -337,6 +346,32 @@ body {
   font-weight: 600;
 }
 .link-btn:hover { opacity: 1; }
+
+/* The left/right groups are plain stacked columns by default (mobile): hero +
+   stats, then the games, then the reset link — natural single-column order. */
+.home-left, .home-right { display: flex; flex-direction: column; gap: var(--gap); width: 100%; align-items: center; }
+
+/* ---- Home in landscape: the two groups become independent side-by-side
+   columns, each vertically centred, so wide screens fill the horizontal space
+   and the page fits the viewport height without scrolling. ---- */
+@media (min-width: 760px) {
+  .screen.home {
+    max-width: min(1000px, 100%);
+    display: grid;
+    align-content: center;
+    column-gap: clamp(24px, 4vw, 56px);
+    row-gap: clamp(8px, 1.6vh, 16px);
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    grid-template-areas:
+      'lang  lang'
+      'left  right'
+      'reset reset';
+  }
+  .home .lang-bar   { grid-area: lang; justify-self: start; }
+  .home .home-left  { grid-area: left; justify-content: center; }
+  .home .home-right { grid-area: right; justify-content: center; }
+  .home > .link-btn { grid-area: reset; }
+}
 
 /* ---- Play: a height-budgeted grid (two-column stage in landscape) -------- */
 
