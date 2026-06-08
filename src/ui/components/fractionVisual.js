@@ -153,7 +153,7 @@ function renderGlass(n, d, w = 78, h = 110) {
   return svg
 }
 
-// ---- Add / subtract: an equation strip on a unified grid -------------------
+// ---- Grid-equation strip (add / subtract / divide) -------------------------
 
 // A term in the equation: a grid with its fraction label below.
 function eqTerm(grid, label, i) {
@@ -162,40 +162,83 @@ function eqTerm(grid, label, i) {
 
 // The label under each operand: the original fraction, plus its equivalent on
 // the common denominator when scaling changed it — which is exactly *why* the
-// grid is unified (you can only add/subtract once the pieces are the same size).
+// grid is unified (the cells must be the same size before you can combine them).
 function eqLabel(n, d, D) {
   const lab = el('div', { class: 'eq-lab' }, fractionGlyph(n, d, { size: 'sm' }))
   if (d !== D) lab.append(el('span', { class: 'eq-eqsign' }, '='), fractionGlyph((n * D) / d, D, { size: 'sm' }))
   return lab
 }
 
-// `A [+|−] B = ?` where every fraction is drawn on ONE common-denominator grid,
-// so all cells are the same size and the child can directly count and combine
-// them. The result stays a "?" (an empty grid) so the visual never hands over
-// the answer — it scaffolds the typed tiers without solving them.
-function renderAddSubVisual(visual) {
-  const { a, b, op } = visual
+// `A [op] B = ?` where both operands are drawn on ONE common-denominator grid,
+// so all cells are the same size. Add/subtract combine the cells directly;
+// divide reads off the ratio of the two shaded counts (a/b ÷ c/d = the cells of
+// A over the cells of B, once both are on the common grid). The result stays a
+// "?" (an empty grid) so the visual scaffolds the typed tiers without solving.
+function renderGridEquation({ a, b }, opSymbol, opClass) {
   const D = lcm(a.d, b.d)
   const { cols } = gridShape(D)
   return el(
     'div',
-    { class: `viz eq-strip eq-${op}` },
+    { class: `viz eq-strip ${opClass}` },
     eqTerm(fractionGrid((a.n * D) / a.d, D, { cols }), eqLabel(a.n, a.d, D), 0),
-    el('div', { class: 'eq-op' }, op === 'add' ? '+' : '−'),
+    el('div', { class: 'eq-op' }, opSymbol),
     eqTerm(fractionGrid((b.n * D) / b.d, D, { cols, delay: 0.12 }), eqLabel(b.n, b.d, D), 1),
     el('div', { class: 'eq-op' }, '='),
     eqTerm(fractionGrid(0, D, { cols, empty: true }), el('span', { class: 'eq-q' }, '?'), 2),
   )
 }
 
+const renderAddSubVisual = (v) => renderGridEquation(v, v.op === 'add' ? '+' : '−', `eq-${v.op}`)
+const renderDivVisual = (v) => renderGridEquation(v, '÷', 'eq-div')
+
+// ---- Multiply: the area (array) model --------------------------------------
+
+// A unit square split into `a.d` columns and `b.d` rows. Shading `a.n` columns
+// (fraction A) and `b.n` rows (fraction B), their overlap is the product:
+// a.n×b.n cells out of a.d×b.d. Seeing the two strips cross is the whole idea of
+// why you multiply numerators and denominators.
+function renderMulVisual({ a, b }) {
+  const cols = a.d
+  const rows = b.d
+  const grid = el('div', { class: 'am-grid', style: `--cols:${cols}` })
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const inA = c < a.n
+      const inB = r < b.n
+      const cls = inA && inB ? 'ab' : inA ? 'a' : inB ? 'b' : ''
+      grid.append(el('span', { class: `am-cell ${cls}`, style: `animation-delay:${0.018 * (r * cols + c)}s` }))
+    }
+  }
+  return el(
+    'div',
+    { class: 'viz mul-area' },
+    grid,
+    el(
+      'div',
+      { class: 'eq-lab' },
+      fractionGlyph(a.n, a.d, { size: 'sm' }),
+      el('span', { class: 'eq-eqsign' }, '×'),
+      fractionGlyph(b.n, b.d, { size: 'sm' }),
+    ),
+  )
+}
+
 // ---- public ---------------------------------------------------------------
 
-// Pick the right visual for a problem: the add/subtract equation strip, or the
-// five-way representation gallery for single-fraction visuals.
+// Pick the right visual for a problem: the grid-equation strip (add/subtract/
+// divide), the multiply area model, or the five-way single-fraction gallery.
 export function renderProblemVisual(visual) {
   if (!visual) return null
-  if (visual.type === 'addsub') return renderAddSubVisual(visual)
-  return renderRepresentationGallery(visual)
+  switch (visual.type) {
+    case 'addsub':
+      return renderAddSubVisual(visual)
+    case 'mul':
+      return renderMulVisual(visual)
+    case 'div':
+      return renderDivVisual(visual)
+    default:
+      return renderRepresentationGallery(visual)
+  }
 }
 
 // Single classic visual (kept for compatibility): pie or bar.

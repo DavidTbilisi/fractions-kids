@@ -290,6 +290,9 @@ function genMulDiv(tier, rng) {
   const symbol = op === 'mul' ? '×' : '÷'
   const prompt = `${toString(fa)} ${symbol} ${toString(fb)} = ?`
 
+  // Multiply → area model; divide → the unified-grid ratio strip.
+  const visual = { type: op, a: { n: fa.n, d: fa.d }, b: { n: fb.n, d: fb.d } }
+
   if (tier === 1) {
     // Multiple choice for the gentlest multiply tier.
     const distractors = [
@@ -298,14 +301,14 @@ function genMulDiv(tier, rng) {
       simplify(frac(fa.n * fb.d, fa.d * fb.n)), // confusing mul with div
     ]
     const choices = fractionChoices(rng, answer, distractors)
-    return { skill, tier, prompt, visual: null, inputMode: 'choice', choices, answer, check: (v) => equals(v, answer) }
+    return { skill, tier, prompt, visual, inputMode: 'choice', choices, answer, check: (v) => equals(v, answer) }
   }
 
   return {
     skill,
     tier,
     prompt: prompt + t('prompt.simplestSuffix'),
-    visual: null,
+    visual,
     inputMode: 'fraction',
     choices: null,
     answer,

@@ -560,6 +560,26 @@ body {
   color: var(--accent-deep);
 }
 
+/* ---- Multiply: area (array) model -------------------------------------- */
+.mul-area { display: flex; flex-direction: column; align-items: center; gap: clamp(7px, 1.4vh, 12px); }
+.am-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  gap: clamp(2px, 0.5vw, 4px);
+  width: clamp(120px, 24vw, 188px);
+}
+.am-cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1.5px rgba(74, 44, 92, 0.12);
+  animation: cellPop 0.3s ease both;
+}
+/* A = columns (one strip), B = rows (the other); their overlap is the product. */
+.am-cell.a { background: #d9ecff; box-shadow: inset 0 0 0 1.5px #9cc6ff; }
+.am-cell.b { background: #ffd9ec; box-shadow: inset 0 0 0 1.5px #ff9cc6; }
+.am-cell.ab { background: linear-gradient(135deg, var(--accent), var(--accent-deep)); box-shadow: none; }
+
 /* Number line */
 .viz-nl { width: clamp(90px, 14vw, 116px); display: flex; flex-direction: column; gap: 8px; padding-top: 26px; }
 .nl-track { position: relative; height: 8px; background: #e8ddff; border-radius: 999px; }
